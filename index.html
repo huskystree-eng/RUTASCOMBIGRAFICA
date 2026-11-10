@@ -41,6 +41,7 @@ body:not(.simple)>#sm{display:none}
 #pn{position:fixed;inset:0;z-index:16;background:var(--bg);overflow:auto;padding:8px 10px 60px}#pn details{border-top:1px solid var(--bd);padding:6px 0}#pn summary{cursor:pointer}#pn summary small{color:var(--mut)}#pn .th{height:96px;width:96px}#pn figure{margin:0;text-align:center;font-size:11px}#pn .ph{padding:6px 0}.pz{padding:6px 0 6px 10px}
 #cl{position:fixed;bottom:calc(6px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:6;background:#000a;color:#fff;border-radius:14px;padding:4px 12px;font-size:12px;pointer-events:none}
 #lg{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:center;justify-content:center}#lg form{background:var(--card);padding:16px;border-radius:12px;display:flex;flex-direction:column;gap:8px;width:min(92vw,340px)}#lg input{padding:10px;font-size:16px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx)}
+#sm .sr button{padding:10px 14px;font-size:17px}
 #ed{position:fixed;inset:0;z-index:15;background:var(--bg);overflow:auto;padding:8px 10px 60px}
 .edh{position:sticky;top:0;background:var(--bg);display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 0;z-index:2}
 .er{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px;margin:10px 0}.erh{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.erh b{font-size:16px}.erh small{color:var(--mut)}.eb{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap}
@@ -291,6 +292,9 @@ const tc=s=>s&&s===s.toUpperCase()?s.toLowerCase().replace(/(^|\s)\S/g,c=>c.toUp
 const ordL=ru=>{const m=new Map();D.recs.filter(r=>r.ruta===ru).forEach(r=>{if(!m.has(r.cr)){const a=D.addr[r.cr]||{};m.set(r.cr,{cr:r.cr,tienda:r.tienda,mpo:r.mpo||a.mpo||'',dir:AD[r.cr]!==undefined?AD[r.cr]:(a.dir||''),sp:[]})}m.get(r.cr).sp.push(r)});
  const l=[...m.values()],pl=P[ru]||[],ip=c=>{const i=pl.indexOf(c);return i<0?9999:i};l.forEach(s=>s.cp=s.dir?parse(s.dir).cp:'');
  l.sort((a,b)=>pl.length?(ip(a.cr)-ip(b.cr)||a.tienda.localeCompare(b.tienda)):(a.mpo.localeCompare(b.mpo)||a.cp.localeCompare(b.cp)||a.tienda.localeCompare(b.tienda)));return l};
+let SO=LS('sord')||{},sOrd=false;
+const ordS=ru=>{const l=ordL(ru),h=l.map(s=>s.cr).join(','),o=SO[ru];if(!o||o.h!==h)return l;const ix=c=>{const i=o.o.indexOf(c);return i<0?9999:i};return l.slice().sort((a,b)=>ix(a.cr)-ix(b.cr))};
+const saveSO=(ru,o)=>{SO[ru]={h:ordL(ru).map(s=>s.cr).join(','),o};SV('sord',SO)};
 const hdl=x=>!!done[x.id]||!!skip[phk(x)],mainR=()=>D.main||D.rutas;
 const PINH='18v669bqmov';
 const hp=s=>{let h1=0xdeadbeef,h2=0x41c6ce57;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return(4294967296*(2097151&h2)+(h1>>>0)).toString(36)};
@@ -300,15 +304,17 @@ function askPin(){const l=LS('pinlock')||{n:0,t:0};if(Date.now()<l.t){alert('Dem
  const n=(l.n||0)+1;SV('pinlock',{n,t:n>=5?Date.now()+60000*Math.min(n-4,10):0});alert('PIN incorrecto.');return false}
 async function setMode(m){if(m==='f'&&!admOk&&!(await(CLOUD?askLogin():askPin())))return;if(m==='s'){admOk=false;try{sessionStorage.removeItem('adm')}catch(e){}}mode=m;SV('mode',m);render()}
 function drawSimple(){const el=$('sm');
+if(CLOUD&&!LS('who')){el.innerHTML='<h2 style="margin:6px 0">Recorrido Lonas P12</h2><p>¿Cómo te llamas? (aparecerá en el informe)</p><input id="wn" placeholder="Tu nombre" style="width:100%;padding:14px;font-size:18px;border-radius:10px;border:1px solid var(--bd)"><button class="big g" data-s="name">Continuar</button><p style="text-align:center"><a href="#" data-s="full" class="lk">🔒 Administrador</a></p>';return}
  if(!sRoute||!mainR().includes(sRoute)){const any=D.recs.some(x=>hdl(x)||PH[phk(x)+'|a']||PH[phk(x)+'|d']);
-  if(CLOUD&&!LS('who')){el.innerHTML='<h2 style="margin:6px 0">Recorrido Lonas P12</h2><p>¿Cómo te llamas? (aparecerá en el informe)</p><input id="wn" placeholder="Tu nombre" style="width:100%;padding:14px;font-size:18px;border-radius:10px;border:1px solid var(--bd)"><button class="big g" data-s="name">Continuar</button><p style="text-align:center"><a href="#" data-s="full" class="lk">🔒 Administrador</a></p>';return}
+
   el.innerHTML='<h2 style="margin:6px 0">Recorrido Lonas P12</h2><p>¿Qué ruta vas a hacer hoy?</p>'+mainR().map(ru=>{const l=ordL(ru),h=l.filter(s=>s.sp.every(hdl)).length;return'<button class="big" data-s="r:'+esc(ru)+'">'+esc(ru.replace(/^Ruta /,'').toUpperCase())+'<small>'+h+' de '+l.length+' tiendas listas</small></button>'}).join('')+(any?'<button class="big g" data-s="send">📤 Enviar informe</button>':'')+'<p style="text-align:center"><a href="#" data-s="full" class="lk">🔒 Administrador</a></p>';return}
- const list=ordL(sRoute),tot=list.length,hn=list.filter(s=>s.sp.every(hdl)).length;let cur=list.find(s=>s.cr===sCur)||list.find(s=>!s.sp.every(hdl));
- let h='<div class="topb"><button class="sm" data-s="home">← Rutas</button><b>'+esc(sRoute.replace(/^Ruta /,'').toUpperCase())+'</b><span>'+hn+'/'+tot+'</span></div><div class="bar2"><i style="width:'+(tot?100*hn/tot:0)+'%"></i></div>';
+ const list=ordS(sRoute),tot=list.length,hn=list.filter(s=>s.sp.every(hdl)).length;let cur=list.find(s=>s.cr===sCur)||list.find(s=>!s.sp.every(hdl));
+ let h='<div class="topb"><button class="sm" data-s="home">← Rutas</button><b>'+esc(sRoute.replace(/^Ruta /,'').toUpperCase())+'</b><span>'+hn+'/'+tot+'</span></div><div class="bar2"><i style="width:'+(tot?100*hn/tot:0)+'%"></i></div><button class="sm" data-s="ord" style="width:100%;margin:2px 0 6px">↕ Ordenar ruta</button>';
+ if(sOrd){h+='<div class="card2"><b>↕ Ordenar ruta</b><div class="addr">Mueve las tiendas con ▲ ▼ o ⤒ (pasar al primer lugar). Solo cambia el orden en tu celular.</div></div>'+list.map((s,n)=>'<div class="sr"><span class="sn">'+(n+1)+'. '+(s.sp.every(hdl)?'✅ ':'')+'<b>'+esc(s.tienda)+'</b> <small>'+esc(s.mpo)+'</small></span><button data-s="otop:'+s.cr+'">⤒</button><button data-s="oup:'+s.cr+'">▲</button><button data-s="odn:'+s.cr+'">▼</button></div>').join('')+'<button class="big g" data-s="ordx">✅ Listo</button><div style="text-align:center"><a href="#" class="lk" data-s="ores">Volver al orden original</a></div>';el.innerHTML=h;return}
  if(!cur){el.innerHTML=h+'<div class="card2" style="text-align:center"><div style="font-size:48px">🎉</div><div class="what">¡Ruta terminada!</div></div><button class="big g" data-s="send">📤 Enviar informe</button><button class="big o" data-s="home">Elegir otra ruta</button>';return}
  sCur=cur.cr;const idx=list.indexOf(cur),ok=cur.sp.every(hdl),ob=(D.addr[cur.cr]||{}).obs;
  h+='<div class="card2"><div class="small">Tienda '+(idx+1)+' de '+tot+'</div><div class="what">'+esc(cur.tienda)+'</div><div class="addr">'+esc(cur.mpo)+(cur.dir?' · '+esc(cur.dir):'')+'</div>'+(ob?'<div class="addr">📝 '+esc(ob)+'</div>':'')
-  +'<a class="big b" target="_blank" rel="noopener" href="'+navUrl(cur)+'">🧭 Cómo llegar</a><div style="text-align:center"><a class="lk" target="_blank" rel="noopener" href="'+navUrl(cur,'o')+'">No la encuentro: buscar por nombre</a></div></div>';
+  +'</div>';
  cur.sp.forEach(x=>{const k=phk(x),[v,w]=vigTxt(x),A=PH[k+'|a'],Dd=PH[k+'|d'],sk=skip[k],th=(s,p)=>p?'<img class="th" data-v="'+esc(k+'|'+s)+'" src="'+p.url+'">':'';
   h+='<div class="card2 sp2 '+x.marca+'"><div class="small">Qué colocar</div><div class="what">'+(x.blank?'Sin datos de la pieza: pregunta qué colocar':'<span class="tag '+x.marca+'">'+esc(x.marca)+'</span> '+esc(x.tipo.toUpperCase())+' '+esc(x.medida.replace(/ x /,' × '))+' m')+'</div>'+(w?'<div class="warn">⚠ '+esc(v)+'</div>':'')
    +'<details><summary>Ver promoción y pasos</summary>'+esc(x.promo)+(x.ins?'<br><br>'+esc(x.ins):'')+(x.acs?'<br><b>Llevar:</b> '+esc(x.acs):'')+'</details>';
@@ -320,10 +326,12 @@ function drawSimple(){const el=$('sm');
   +'<div class="nv"><button class="sm" data-s="mv:-1">◀</button><select id="sj">'+list.map(s=>'<option value="'+s.cr+'"'+(s.cr===cur.cr?' selected':'')+'>'+(s.sp.every(hdl)?'✅ ':'')+esc(s.tienda)+'</option>').join('')+'</select><button class="sm" data-s="mv:1">▶</button></div>';
  el.innerHTML=h}
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-s]');if(!t)return;e.preventDefault();const s=t.dataset.s,i=s.indexOf(':'),a=i<0?s:s.slice(0,i),b=i<0?'':s.slice(i+1);
- if(a==='r'){sRoute=b;SV('sroute',b);sCur=null}else if(a==='home'){sRoute=null;SV('sroute',null);sCur=null}else if(a==='next')sCur=null;
- else if(a==='mv'){const l=ordL(sRoute),j=Math.max(0,Math.min(l.length-1,l.findIndex(x=>x.cr===sCur)+ +b));sCur=l[j].cr}
+ if(a==='r'){sRoute=b;SV('sroute',b);sCur=null;sOrd=false}else if(a==='home'){sRoute=null;SV('sroute',null);sCur=null;sOrd=false}
+ else if(a==='ord'){sOrd=true}else if(a==='ordx'){sOrd=false;sCur=null}else if(a==='ores'){delete SO[sRoute];SV('sord',SO)}
+ else if(a==='oup'||a==='odn'||a==='otop'){const l=ordS(sRoute).map(s=>s.cr),i=l.indexOf(b),j=a==='oup'?i-1:a==='odn'?i+1:0;if(i<0||j<0||j>=l.length)return;l.splice(i,1);l.splice(j,0,b);saveSO(sRoute,l);const y=window.scrollY;render();window.scrollTo(0,y);return}else if(a==='next')sCur=null;
+ else if(a==='mv'){const l=ordS(sRoute),j=Math.max(0,Math.min(l.length-1,l.findIndex(x=>x.cr===sCur)+ +b));sCur=l[j].cr}
  else if(a==='skip'){const r=prompt('¿Por qué no se pudo instalar? (ej. tienda cerrada, sin espacio, no permitieron)');if(r===null)return;skip[b]=r.trim()||'Sin motivo';SV('skip',skip)}
- else if(a==='undo'){delete skip[b];SV('skip',skip)}else if(a==='name'){const v=($('wn').value||'').trim();if(!v)return;SV('who',v);schedFlush(500)}else if(a==='send'){if(CLOUD)sendCloud();else $('rp').click();return}else if(a==='full'){setMode('f');return}else if(a==='clear'){if(admOk)clearProgress();return}
+ else if(a==='undo'){delete skip[b];SV('skip',skip)}else if(a==='name'){const v=($('wn').value||'').trim();if(!v)return;SV('who',v);SV('eid',null);SV('ereg',false);schedFlush(500);beat()}else if(a==='send'){if(CLOUD)sendCloud();else $('rp').click();return}else if(a==='full'){setMode('f');return}else if(a==='clear'){if(admOk)clearProgress();return}
  render();window.scrollTo(0,0)});
 document.addEventListener('change',e=>{if(e.target.id==='sj'){sCur=e.target.value;render();window.scrollTo(0,0)}});
 $('ms').onclick=()=>setMode('s');
@@ -469,7 +477,7 @@ function askLogin(){return new Promise(res=>{const lg=$('lg'),f=$('lgf'),m=$('lg
 /* --- empleados: enviar avance y fotos --- */
 function diff(){const sent=LS('sent')||{},who=LS('who')||'',seen=new Set(),dk={},out=[];D.recs.forEach(r=>{if(done[r.id])dk[phk(r)]=1});
  D.recs.forEach(x=>{const k=phk(x);if(seen.has(k))return;seen.add(k);const A=PH[k+'|a'],Dd=PH[k+'|d'],st=dk[k]?'hecho':skip[k]?'no_realizado':(A||Dd)?'en_proceso':'',nota=notes[x.cr]||'';
-  const sig=(!st&&!nota)?'':[st,skip[k]||'',nota,A?A.ts:'',Dd?Dd.ts:'',who].join('|');if(sig===(sent[k]||''))return;out.push({x,k,A,Dd,st,nota,sig,who})});return out}
+  const sig=(!st&&!nota)?'':[st,skip[k]||'',nota,A?A.ts:'',Dd?Dd.ts:''].join('|');if(sig===(sent[k]||''))return;out.push({x,k,A,Dd,st,nota,sig,who})});return out}
 function cloudBadge(){const b=$('cl');if(!b)return;if(!CLOUD){b.hidden=true;return}const n=diff().length;b.hidden=false;b.textContent=(navigator.onLine?'':'📴 Sin señal · ')+(n?'⏳ '+n+' por enviar':'☁️ Todo enviado')}
 function schedFlush(ms){if(!CLOUD)return;clearTimeout(flushT);flushT=setTimeout(flush,ms||4000);cloudBadge()}
 async function flush(){if(!CLOUD||flushing||!navigator.onLine)return diff().length;flushing=true;
@@ -482,6 +490,17 @@ async function flush(){if(!CLOUD||flushing||!navigator.onLine)return diff().leng
  }finally{flushing=false}cloudBadge();return diff().length}
 async function sendCloud(){if(!LS('who')){render();return}$('st').textContent='Enviando…';const n=await flush();
  if(!n)alert('✅ Informe enviado. Gracias.');else if(confirm('Quedan '+n+' espacios por enviar (¿sin señal?). Se enviarán solos cuando haya internet.\n\n¿Compartir el informe por WhatsApp/correo mientras tanto?'))$('rp').click()}
+/* --- registro y conexión de empleados --- */
+var EM=[];
+function uid(){try{return crypto.randomUUID()}catch(e){return'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,10)}}
+async function beat(){if(!CLOUD||admOk||document.hidden||!navigator.onLine)return;const who=LS('who');if(!who)return;
+ let id=LS('eid');if(!id){id=uid();SV('eid',id);SV('ereg',false)}
+ try{const now=new Date().toISOString();
+  if(!LS('ereg')){await sb('/rest/v1/empleados?on_conflict=id',{method:'POST',headers:{'Content-Type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({id,nombre:who,ultima_conexion:now})});SV('ereg',true);return}
+  const r=await(await sb('/rest/v1/empleados?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify({nombre:who,ultima_conexion:now})})).json();
+  if(Array.isArray(r)&&!r.length){SV('who',null);SV('eid',null);SV('ereg',false);render()}}catch(e){}}
+async function delEmp(id,n){if(!confirm('¿Eliminar a '+n+'?\n\nPerderá el acceso en su celular y tendrá que registrarse de nuevo si vuelve a entrar. Lo que ya envió se conserva.'))return;
+ try{await sb('/rest/v1/empleados?id=eq.'+encodeURIComponent(id),{method:'DELETE'},await token());loadPn()}catch(e){$('pnm').textContent='⚠ No se pudo eliminar: '+e.message}}
 /* --- configuración publicada por el administrador --- */
 async function pullCfg(force){if(!CLOUD||(admOk&&!force)||!navigator.onLine)return;
  try{const r=await(await sb('/rest/v1/config?id=eq.1&select=data,version')).json(),c=r[0];if(!c||String(c.version)===String(LS('cfgv')||''))return;applyCfg(c.data);SV('cfgv',c.version);
@@ -507,7 +526,7 @@ async function cloudReset(){const tk=await token();if(!tk)throw new Error('Inici
  await sb('/rest/v1/avance?key=not.is.null',{method:'DELETE'},tk);SV('reset',Date.now());await publish()}
 /* --- panel de seguimiento (administrador) --- */
 const wh=t=>t?new Date(t).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'}):'';
-async function loadPn(){try{const tk=await token();if(!tk)return;AV=await(await sb('/rest/v1/avance?select=*&order=updated_at.desc&limit=3000',{},tk)).json();AV=AV.filter(a=>a.estado);drawPn()}catch(e){$('pnm').textContent='⚠ No se pudo leer el avance: '+e.message}}
+async function loadPn(){try{const tk=await token();if(!tk)return;AV=await(await sb('/rest/v1/avance?select=*&order=updated_at.desc&limit=3000',{},tk)).json();AV=AV.filter(a=>a.estado);try{EM=await(await sb('/rest/v1/empleados?select=*&order=ultima_conexion.desc',{},tk)).json()}catch(e){EM=null}drawPn()}catch(e){$('pnm').textContent='⚠ No se pudo leer el avance: '+e.message}}
 function openPn(){$('pn').hidden=false;$('pn').innerHTML='<div class="edh"><b>📊 Seguimiento</b><button data-q="close">Cerrar</button></div><p id="pnm">Cargando…</p>';loadPn();clearInterval(pnT);pnT=setInterval(()=>{if(!$('pn').hidden)loadPn()},15000)}
 function drawPn(){const el=$('pn'),byK={};AV.forEach(a=>byK[a.key]=a);const emp={};AV.forEach(a=>{if(a.estado==='hecho'){const n=a.empleado||'(sin nombre)';emp[n]=(emp[n]||0)+1}});
  let TT=0,TL=0,PZ=0,PD=0,body='';
@@ -525,6 +544,7 @@ function drawPn(){const el=$('pn'),byK={};AV.forEach(a=>byK[a.key]=a);const emp=
  const act=AV.slice(0,6).map(a=>'<div class="addr">'+wh(a.updated_at)+' · '+esc2(a.empleado||'?')+' · '+esc2(a.tienda)+' · '+esc2(a.marca)+' '+esc2(a.tipo)+' → '+({hecho:'hecho',no_realizado:'no realizado',en_proceso:'en proceso'}[a.estado]||a.estado)+'</div>').join('');
  el.innerHTML='<div class="edh"><b>📊 Seguimiento</b><span><button data-q="rep">📥 Informe Excel</button> <button data-q="ref">↻</button> <button data-q="close">Cerrar</button></span></div>'
   +'<div class="card2"><b>'+TL+' de '+TT+' tiendas listas · '+PD+' de '+PZ+' piezas</b><div class="bar2"><i style="width:'+(TT?100*TL/TT:0)+'%"></i></div><div class="addr" id="pnm">'+(Object.keys(emp).length?'Por persona: '+Object.entries(emp).map(([n,c])=>esc2(n)+' '+c).join(' · '):'Aún nadie ha enviado avance.')+' · actualizado '+new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'})+'</div></div>'
+  +'<div class="card2"><b>👥 Empleados'+(EM?' ('+EM.length+')':'')+'</b>'+(EM===null?'<div class="addr">⚠ Falta crear la tabla de empleados en Supabase (ver GUIA_NUBE.md).</div>':EM.length?EM.map(m=>{const on=Date.now()-new Date(m.ultima_conexion).getTime()<120000;return'<div class="sr"><span class="sn">'+(on?'🟢':'⚪')+' <b>'+esc2(m.nombre)+'</b> <small>'+(on?'conectado ahora':'visto '+wh(m.ultima_conexion))+' · '+(emp[m.nombre]||0)+' piezas hechas</small></span><button data-q="edel" data-id="'+esc2(m.id)+'" data-n="'+esc2(m.nombre)+'">🗑 Eliminar</button></div>'}).join(''):'<div class="addr">Nadie se ha conectado todavía.</div>')+'</div>'
   +(act?'<div class="card2"><b>Actividad reciente</b>'+act+'</div>':'')+body;loadThumbs()}
 async function loadThumbs(){const tk=await token();if(!tk)return;for(const im of $('pn').querySelectorAll('details[open] img[data-p]')){const p=im.dataset.p;if(!TH[p]){try{TH[p]=URL.createObjectURL(await(await sb('/storage/v1/object/authenticated/fotos/'+p,{},tk)).blob())}catch(e){continue}}im.src=TH[p]}}
 async function cloudReport(){$('pnm').textContent='Armando Excel con fotos…';const tk=await token(),byK={};D.recs.forEach(x=>byK[phk(x)]=x);
@@ -535,10 +555,10 @@ async function cloudReport(){$('pnm').textContent='Armando Excel con fotos…';c
  const buf=await buildReport(rows,D.rutas),d=new Date(),p2=n=>String(n).padStart(2,'0'),name='Seguimiento_Lonas_P12_'+d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())+'_'+p2(d.getHours())+p2(d.getMinutes())+'.xlsx',a=document.createElement('a');
  a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));a.download=name;a.click();$('pnm').textContent='Excel descargado: '+name}
 document.addEventListener('click',e=>{const t=e.target;
- if(t.closest&&t.closest('#pn')){const q=t.dataset.q;if(q==='close'){$('pn').hidden=true;clearInterval(pnT)}else if(q==='ref')loadPn();else if(q==='rep')cloudReport().catch(er=>{$('pnm').textContent='⚠ '+er.message});else if(t.tagName==='IMG'&&TH[t.dataset.p])window.open(TH[t.dataset.p])}});
+ if(t.closest&&t.closest('#pn')){const q=t.dataset.q;if(q==='close'){$('pn').hidden=true;clearInterval(pnT)}else if(q==='ref')loadPn();else if(q==='edel')delEmp(t.dataset.id,t.dataset.n);else if(q==='rep')cloudReport().catch(er=>{$('pnm').textContent='⚠ '+er.message});else if(t.tagName==='IMG'&&TH[t.dataset.p])window.open(TH[t.dataset.p])}});
 document.addEventListener('toggle',e=>{const d=e.target;if(d.tagName==='DETAILS'&&d.closest('#pn')){d.open?pnOpen.add(d.dataset.c):pnOpen.delete(d.dataset.c);if(d.open)loadThumbs()}},true);
 if(CLOUD){$('pnb').onclick=()=>admOk&&openPn();$('pub').onclick=()=>publish(true);
- const tick=()=>{pullCfg();flush()};setInterval(tick,20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick()});addEventListener('online',tick);setTimeout(tick,1500)}
+ const tick=()=>{pullCfg();flush();beat()};setInterval(tick,20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick()});addEventListener('online',tick);setTimeout(tick,1500)}
 else{$('pnb').style.display='none';$('pub').style.display='none'}
 
 fillBrands();render();
