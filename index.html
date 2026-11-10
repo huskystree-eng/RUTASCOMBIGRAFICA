@@ -41,6 +41,7 @@ body:not(.simple)>#sm{display:none}
 #pn{position:fixed;inset:0;z-index:16;background:var(--bg);overflow:auto;padding:8px 10px 60px}#pn details{border-top:1px solid var(--bd);padding:6px 0}#pn summary{cursor:pointer}#pn summary small{color:var(--mut)}#pn .th{height:96px;width:96px}#pn figure{margin:0;text-align:center;font-size:11px}#pn .ph{padding:6px 0}.pz{padding:6px 0 6px 10px}
 #cl{position:fixed;bottom:calc(6px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:6;background:#000a;color:#fff;border-radius:14px;padding:4px 12px;font-size:12px;pointer-events:none}
 #lg{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:center;justify-content:center}#lg form{background:var(--card);padding:16px;border-radius:12px;display:flex;flex-direction:column;gap:8px;width:min(92vw,340px)}#lg input{padding:10px;font-size:16px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx)}
+#ed .chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:2px 0 6px}#ed .chips button{padding:4px 10px;font-size:13px}#ed .chips small{color:var(--mut)}
 #ed .ed1{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;margin:8px 0}#ed .ed1 summary{font-weight:700;cursor:pointer}.pcs{margin:0 0 6px 18px;font-size:13px}.pcs summary{cursor:pointer;color:var(--mut)}.ef textarea{width:100%;margin:3px 0;padding:8px;box-sizing:border-box;font:inherit;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--tx)}.row2{display:flex;gap:6px}.row2 label{flex:1;font-size:12px;color:var(--mut)}
 #sm .sr button{padding:10px 14px;font-size:17px}
 #ed{position:fixed;inset:0;z-index:15;background:var(--bg);overflow:auto;padding:8px 10px 60px}
@@ -196,6 +197,8 @@ const DEF_MATS=['Lona','Pendón','Vinil','Vinil microperforado'];
 function getCat(d){d=d||D;if(d.cat)return JSON.parse(JSON.stringify({promos:d.cat.promos||[],mats:d.cat.mats||DEF_MATS}));
  const promos=[],seen=new Set();d.recs.forEach(r=>{const k=r.marca+'|'+r.promo;if(r.promo&&!seen.has(k)){seen.add(k);promos.push({marca:r.marca,txt:r.promo,desde:r.desde||(VG[r.marca]||[])[0]||'',hasta:r.hasta||(VG[r.marca]||[])[1]||''})}});
  return{promos,mats:[...new Set(DEF_MATS.concat(d.recs.map(r=>r.tipo).filter(Boolean)))]}}
+const cat0marcas=()=>{try{return(getCat().promos||[]).map(p=>p.marca)}catch(e){return[]}};
+const normBr=s=>{s=BR(String(s||'').trim());if(!s)return'';const ex=[...new Set(D.recs.map(r=>r.marca).concat(cat0marcas()))].find(x=>x&&fx(x)===fx(s));return ex||s.replace(/\S+/g,w=>w[0].toUpperCase()+w.slice(1))};
 const catW=()=>{ED.cat=ED.cat||getCat();return ED.cat};
 async function loadXlsx(file){try{
  const wb=XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:true});
@@ -219,7 +222,7 @@ async function loadXlsx(file){try{
    if(k){cr=k;nameCr.add(cr)}else{cr='N'+hash(q);newCr.add(cr)}}
   const kr=byCr.get(cr),nm=tienda||(kr?kr.tienda:cr);
   if(!rutas.includes(ruta))rutas.push(ruta);
-  const marca=BR(S(r,k=>k==='marca')),med=S(r,k=>k.startsWith('medida')&&!k.includes('original')).replace(/×/g,'x'),dir=S(r,k=>k==='direccion'),mpo=S(r,k=>k==='municipio')||(kr&&kr.mpo)||'',tipo=marca?(S(r,k=>k==='tipo')||'Lona'):'';
+  const marca=normBr(S(r,k=>k==='marca')),med=S(r,k=>k.startsWith('medida')&&!k.includes('original')).replace(/×/g,'x'),dir=S(r,k=>k==='direccion'),mpo=S(r,k=>k==='municipio')||(kr&&kr.mpo)||'',tipo=marca?(S(r,k=>k==='tipo')||'Lona'):'';
   if(marca&&!med)warns.push('Fila '+n+': la pieza no tiene medida');
   recs.push({ruta,marca,cr,tienda:nm,mpo,tipo,medida:med,orig:S(r,k=>k.startsWith('medidaoriginal'))||med,promo:S(r,k=>k.startsWith('promo')),desde:ds(get(r,k=>k.startsWith('vigenciadesde'))),hasta:ds(get(r,k=>k.startsWith('vigenciahasta'))),acc:S(r,k=>k==='accion')||'Instalar',ins:S(r,k=>k.startsWith('quehacer'))||(marca?insFor(tipo):''),mat:S(r,k=>k.startsWith('materialpieza'))||(marca?tipo+' '+marca+' '+med+' m':''),acs:S(r,k=>k.startsWith('accesorios')),...(marca?{}:{blank:true})});
   const obs=S(r,k=>k.startsWith('observ'));if(!addr[cr]||(dir&&!addr[cr].dir))addr[cr]={dir,mpo,obs};else if(obs&&!addr[cr].obs)addr[cr].obs=obs;
@@ -378,31 +381,31 @@ function buildD(){const d=JSON.parse(JSON.stringify(BASE)),e=ED,ren=e.ren||{};
  Object.entries(e.move||{}).forEach(([c,ru])=>d.recs.forEach(r=>{if(r.cr===c)r.ruta=ru}));
  if(e.rutas)d.rutas=e.rutas.slice();if(!d.rutas.includes('Otras tiendas'))d.rutas.push('Otras tiendas');
  d.recs.forEach(r=>{if(!d.rutas.includes(r.ruta))r.ruta='Otras tiendas'});if(e.rutas)d.main=d.rutas.filter(x=>x!=='Otras tiendas');if(e.cat)d.cat=e.cat;return d}
-let edForm=null,edMsg='',edQ='',edPr=null;
+let edForm=null,edMsg='',edQ='',edPr=null,edOpen={};
 const pcs=s=>'<details class="pcs"><summary>'+s.sp.length+' pieza(s) — ver / editar</summary>'+s.sp.map(x=>'<div class="sr"><span class="sn">'+(x.blank?'Sin datos de la pieza':'<b>'+esc(x.tipo)+' '+esc(x.marca)+' '+esc(x.medida)+'</b>')+'<br><small>'+esc((x.promo||'sin promoción').slice(0,80))+'</small></span><button data-e="pe2" data-c="'+esc(s.cr)+'" data-id="'+x.id+'">✏</button><button data-e="pdel" data-id="'+x.id+'">🗑</button></div>').join('')+'</details>';
 function fillEs(){const el=$('esr');if(!el)return;const tk=edQ.split(/\s+/).map(fx).filter(Boolean);if(!tk.length){el.innerHTML='<div class="addr">Escribe para buscar entre todas las tiendas.</div>';return}
  const m=new Map();D.recs.forEach(r=>{if(!m.has(r.cr))m.set(r.cr,{cr:r.cr,tienda:r.tienda,mpo:r.mpo||(D.addr[r.cr]||{}).mpo||'',ruta:r.ruta,n:0});m.get(r.cr).n++});
  const l=[...m.values()].filter(s=>{const z=fx(s.tienda+' '+s.cr+' '+s.mpo);return tk.every(w=>z.includes(w))}).slice(0,20);
  el.innerHTML=l.length?l.map(s=>'<div class="sr"><span class="sn"><b>'+esc(s.tienda)+'</b> <small>'+esc(s.mpo)+' · '+esc(s.cr)+' · ahora en '+esc(s.ruta)+' · '+s.n+' pieza(s)</small></span><select>'+D.rutas.map(r=>'<option'+(r===s.ruta?' disabled':'')+'>'+esc(r)+'</option>').join('')+'</select><button data-e="eadd" data-c="'+esc(s.cr)+'">Agregar</button></div>').join(''):'<div class="addr">Sin resultados. Si es una tienda nueva usa ➕ Tienda nueva.</div>'}
-const saveED=()=>{SV('ed',ED);SV('plan',P);D=buildD();if(!D.rutas.includes(route))route=D.rutas[0];if(sRoute&&!D.rutas.includes(sRoute))sRoute=null;fitNext=true};
+const saveED=()=>{SV('ed',ED);SV('plan',P);D=buildD();fillBrands();if(!D.rutas.includes(route))route=D.rutas[0];if(sRoute&&!D.rutas.includes(sRoute))sRoute=null;fitNext=true};
 const frozen=ru=>{const l=ordL(ru).map(s=>s.cr);P[ru]=l;return l};
 function moveStore(cr,to){const f=D.recs.find(r=>r.cr===cr);if(!f||f.ruta===to)return;P[f.ruta]=frozen(f.ruta).filter(c=>c!==cr);P[to]=frozen(to).filter(c=>c!==cr).concat([cr]);(ED.move=ED.move||{})[cr]=to;saveED()}
 function shift(ru,cr,d){const l=frozen(ru),i=l.indexOf(cr),j=i+d;if(i<0||j<0||j>=l.length)return;[l[i],l[j]]=[l[j],l[i]];P[ru]=l;SV('plan',P)}
 const edRutas=()=>ED.rutas||(ED.rutas=D.rutas.slice());
 function drawEd(){const el=$('ed'),RS=D.rutas,br=[...new Set(['Heineken','Modelo','Kof'].concat(D.recs.map(r=>r.marca)))];
  let h='<div class="edh"><b>✏️ Editar rutas</b><span><button data-e="pdfall">🖨 PDF de las rutas</button> <button data-e="rnew">➕ Ruta</button> <button data-e="snew">➕ Tienda nueva</button> <button data-e="close">Cerrar</button></span></div>'+(edMsg?'<div class="addr">'+esc(edMsg)+'</div>':'');
- const cat=getCat(),brs=br.filter(Boolean);
+ const cat=getCat(),brs=[...new Set(br.filter(Boolean).concat(cat0marcas()))];const brIn=(id,v)=>'<input id="'+id+'" placeholder="Marca (elige una o escribe una nueva)" value="'+esc(v||'')+'" autocomplete="off"><div class="chips">'+brs.map(x=>'<button type="button" data-e="bpick" data-t="'+id+'" data-b="'+esc(x)+'">'+esc(x)+'</button>').join('')+'<small>…o escribe otra</small></div>';
  h+='<details class="ed1" open><summary>🔎 Buscar tienda y agregarla a una ruta</summary><input id="es" type="search" placeholder="Nombre, CR o municipio…" value="'+esc(edQ)+'" style="width:100%;margin:6px 0"><div id="esr"></div></details>';
- h+='<details class="ed1"'+(edPr?' open':'')+'><summary>🏷 Promociones ('+cat.promos.length+')</summary>'
-  +(edPr?(()=>{const p=edPr.i>=0?cat.promos[edPr.i]:{marca:brs[0],txt:'',desde:'',hasta:''};return'<div class="ef"><b>'+(edPr.i>=0?'Editar promoción':'Promoción nueva')+'</b><select id="pr_ma">'+brs.map(x=>'<option'+(x===p.marca?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select><textarea id="pr_tx" rows="3" placeholder="Texto de la promoción">'+esc(p.txt)+'</textarea><div class="row2"><label>Desde <input id="pr_d" type="date" value="'+esc(p.desde)+'"></label><label>Hasta <input id="pr_h" type="date" value="'+esc(p.hasta)+'"></label></div><button data-e="prsave" class="on">Guardar</button> <button data-e="pcancel">Cancelar</button></div>'})():'')
+ h+='<details class="ed1" data-k="pr"'+(edPr||edOpen.pr?' open':'')+'><summary>🏷 Promociones ('+cat.promos.length+')</summary>'
+  +(edPr?(()=>{const p=edPr.i>=0?cat.promos[edPr.i]:{marca:'',txt:'',desde:'',hasta:''};return'<div class="ef"><b>'+(edPr.i>=0?'Editar promoción':'Promoción nueva')+'</b>'+brIn('pr_ma',p.marca)+'<textarea id="pr_tx" rows="3" placeholder="Texto de la promoción">'+esc(p.txt)+'</textarea><div class="row2"><label>Desde <input id="pr_d" type="date" value="'+esc(p.desde)+'"></label><label>Hasta <input id="pr_h" type="date" value="'+esc(p.hasta)+'"></label></div><button data-e="prsave" class="on">Guardar</button> <button data-e="pcancel">Cancelar</button></div>'})():'')
   +cat.promos.map((p,k)=>'<div class="sr"><span class="sn"><span class="tag '+esc(p.marca)+'">'+esc(p.marca)+'</span> '+esc(p.txt.slice(0,90))+(p.txt.length>90?'…':'')+'<br><small>'+esc(p.desde||'—')+' a '+esc(p.hasta||'—')+'</small></span><button data-e="pe" data-i="'+k+'">✏</button><button data-e="px" data-i="'+k+'">🗑</button></div>').join('')+'<div class="sr"><button data-e="pn">➕ Promoción nueva</button></div></details>';
- h+='<details class="ed1"><summary>🧱 Materiales ('+cat.mats.length+')</summary>'+cat.mats.map((m,k)=>'<div class="sr"><span class="sn">'+esc(m)+'</span><button data-e="mx" data-i="'+k+'">🗑</button></div>').join('')+'<div class="sr"><button data-e="mn">➕ Material nuevo</button></div></details>';
+ h+='<details class="ed1" data-k="mt"'+(edOpen.mt?' open':'')+'><summary>🧱 Materiales ('+cat.mats.length+')</summary>'+cat.mats.map((m,k)=>'<div class="sr"><span class="sn">'+esc(m)+'</span><button data-e="mx" data-i="'+k+'">🗑</button></div>').join('')+'<div class="sr"><button data-e="mn">➕ Material nuevo</button></div></details>';
  if(edForm){const ex=!!edForm.cr,ep=edForm.pid!=null?D.recs.find(r=>String(r.id)===String(edForm.pid)):null,mats=cat.mats.slice();if(ep&&ep.tipo&&!mats.includes(ep.tipo))mats.push(ep.tipo);const V=k=>ep&&ep[k]!=null?ep[k]:'';
   h+='<div class="ef"><b>'+(ep?'Editar pieza de '+esc(edForm.cr):ex?'Agregar una pieza a '+esc(edForm.cr):'Tienda nueva')+'</b>'+(ex?'':'<input id="f_cr" placeholder="CR (opcional)"><input id="f_t" placeholder="Nombre de la tienda"><input id="f_m" placeholder="Municipio"><input id="f_d" placeholder="Dirección">')
   +'<select data-e="ppick"><option value="">— Elegir promoción de la lista —</option>'+cat.promos.map((p,k)=>'<option value="'+k+'">['+esc(p.marca)+'] '+esc(p.txt.slice(0,60))+'</option>').join('')+'</select>'
   +'<textarea id="f_pr" rows="3" placeholder="Texto de la promoción (si la escribes aquí, se guarda también en la lista)">'+esc(V('promo'))+'</textarea>'
   +'<div class="row2"><label>Vigencia desde <input id="f_d1" type="date" value="'+esc(V('desde'))+'"></label><label>hasta <input id="f_d2" type="date" value="'+esc(V('hasta'))+'"></label></div>'
-  +'<select id="f_ma">'+brs.map(x=>'<option'+(x===V('marca')?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select><select id="f_ti">'+mats.map(x=>'<option'+(x===V('tipo')?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select><input id="f_me" placeholder="Medida, ej. 1.35 x 4.85" value="'+esc(V('medida'))+'">'
+  +brIn('f_ma',V('marca'))+'<select id="f_ti">'+mats.map(x=>'<option'+(x===V('tipo')?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select><input id="f_me" placeholder="Medida, ej. 1.35 x 4.85" value="'+esc(V('medida'))+'">'
   +'<textarea id="f_in" rows="2" placeholder="Pasos en el lugar (vacío = pasos sugeridos del material)">'+esc(V('ins'))+'</textarea><input id="f_ac" placeholder="Accesorios, separados con ; (opcional)" value="'+esc(V('acs'))+'">'
   +(ep?'<div class="addr">Si cambias marca, material o medida, las fotos ya tomadas de esta pieza no se conservan.</div>':'')
   +(ex?'':'<select id="f_ru">'+RS.map(x=>'<option>'+esc(x)+'</option>').join('')+'</select>')+'<button data-e="fsave" class="on">Guardar</button> <button data-e="fcancel">Cancelar</button></div>'}
@@ -428,7 +431,8 @@ $('ed').addEventListener('click',e=>{const t=e.target.closest('[data-e]');if(!t|
  else if(a==='snew'){edForm={cr:''};drawEd();$('ed').scrollTop=0;return}
  else if(a==='sp'){edForm={cr:c};drawEd();$('ed').scrollTop=0;return}
  else if(a==='fcancel'){edForm=null}
- else if(a==='fsave'){const g=id=>($(id)?$(id).value:'').trim(),ma=g('f_ma'),ti=g('f_ti'),me_=g('f_me').replace(/[×X]/g,'x'),pr=g('f_pr');
+ else if(a==='fsave'){const g=id=>($(id)?$(id).value:'').trim(),ma=normBr(g('f_ma')),ti=g('f_ti'),me_=g('f_me').replace(/[×X]/g,'x'),pr=g('f_pr');
+  if(!ma){edMsg='Falta la marca: elige una o escribe una nueva';drawEd();return}
   if(!me_){edMsg='Falta la medida (ej. 1.35 x 4.85)';drawEd();return}
   const f={marca:ma,tipo:ti,medida:me_,promo:pr,desde:g('f_d1'),hasta:g('f_d2'),ins:g('f_in')||insFor(ti),mat:ti+' '+ma+' '+me_+' m',acs:g('f_ac')};
   if(pr){const k=catW();if(!k.promos.some(p=>p.marca===ma&&p.txt===pr))k.promos.push({marca:ma,txt:pr,desde:f.desde,hasta:f.hasta})}
@@ -438,6 +442,7 @@ $('ed').addEventListener('click',e=>{const t=e.target.closest('[data-e]');if(!t|
    else{const nm=g('f_t');if(!nm){edMsg='Falta el nombre de la tienda';drawEd();return}let cr=g('f_cr').toUpperCase()||('N'+Date.now().toString(36).slice(-4).toUpperCase());if(D.recs.some(r=>r.cr===cr)){edMsg='Ese CR ya existe: usa el botón ＋ de esa tienda para agregarle una pieza';drawEd();return}
     const ru=g('f_ru')||RS[0];(ED.news=ED.news||[]).push({cr,tienda:nm,mpo:g('f_m'),dir:g('f_d'),ruta:ru,sp:[sp]});P[ru]=frozen(ru).concat([cr])}}
   edForm=null;saveED()}
+ else if(a==='bpick'){const x=$(t.dataset.t);if(x)x.value=t.dataset.b;return}
  else if(a==='eadd'){const sel=t.previousElementSibling;if(sel&&sel.value){moveStore(c,sel.value);edMsg='✔ Tienda agregada a '+sel.value}}
  else if(a==='pe2'){edForm={cr:c,pid:t.dataset.id};drawEd();$('ed').scrollTop=0;return}
  else if(a==='pdel'){if(!confirm('¿Quitar esta pieza de la tienda?'))return;ED.pdel=(ED.pdel||[]).concat([+t.dataset.id]);saveED()}
@@ -445,7 +450,7 @@ $('ed').addEventListener('click',e=>{const t=e.target.closest('[data-e]');if(!t|
  else if(a==='pe'){edPr={i};drawEd();return}
  else if(a==='pcancel'){edPr=null}
  else if(a==='px'){catW().promos.splice(i,1);saveED()}
- else if(a==='prsave'){const g=id=>($(id)?$(id).value:'').trim(),o={marca:g('pr_ma'),txt:g('pr_tx'),desde:g('pr_d'),hasta:g('pr_h')};if(!o.txt){edMsg='Escribe el texto de la promoción';drawEd();return}
+ else if(a==='prsave'){const g=id=>($(id)?$(id).value:'').trim(),o={marca:normBr(g('pr_ma')),txt:g('pr_tx'),desde:g('pr_d'),hasta:g('pr_h')};if(!o.marca){edMsg='Falta la marca: elige una o escribe una nueva';drawEd();return}if(!o.txt){edMsg='Escribe el texto de la promoción';drawEd();return}
   const k=catW();if(edPr&&edPr.i>=0){const od=k.promos[edPr.i];k.promos[edPr.i]=o;const aff=D.recs.filter(r=>r.promo===od.txt&&r.marca===od.marca);
    if(aff.length&&(od.txt!==o.txt||od.desde!==o.desde||od.hasta!==o.hasta)&&confirm('¿Actualizar también las '+aff.length+' pieza(s) que ya usan esta promoción?')){ED.pedit=ED.pedit||{};aff.forEach(r=>{ED.pedit[r.id]={...(ED.pedit[r.id]||{}),promo:o.txt,desde:o.desde,hasta:o.hasta}})}}
   else k.promos.push(o);edPr=null;saveED()}
@@ -453,6 +458,7 @@ $('ed').addEventListener('click',e=>{const t=e.target.closest('[data-e]');if(!t|
  else if(a==='mx'){catW().mats.splice(i,1);saveED()}
  else if(a==='pdf'||a==='pdfall'){edMsg='Generando PDF…';drawEd();makePdf(a==='pdf'?[RS[i]]:mainR()).then(m=>{edMsg=m;drawEd()}).catch(er=>{edMsg='No se pudo generar el PDF: '+er.message;drawEd()});return}
  drawEd()});
+$('ed').addEventListener('toggle',e=>{const d=e.target;if(d.tagName==='DETAILS'&&d.dataset.k)edOpen[d.dataset.k]=d.open},true);
 $('ed').addEventListener('input',e=>{if(e.target.id==='es'){edQ=e.target.value;fillEs()}});
 $('ed').addEventListener('change',e=>{const t=e.target;if(t.dataset.e==='ppick'&&t.value!==''){const p=getCat().promos[+t.value];if(p){$('f_pr').value=p.txt;$('f_d1').value=p.desde||'';$('f_d2').value=p.hasta||'';if($('f_ma'))$('f_ma').value=p.marca}return}if(t.dataset.e==='mv'&&t.value){edMsg='';moveStore(t.dataset.c,t.value);drawEd()}});
 /* ---- PDF para imprimir ---- */
