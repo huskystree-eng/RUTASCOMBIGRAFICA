@@ -453,7 +453,7 @@ document.addEventListener('change',e=>{const t=e.target;
 /* ---- NUBE (Supabase): sincronización, publicación y seguimiento ---- */
 var flushT=null,flushing=false,pubT=null,AS=null,AV=[],pnT=null,pnOpen=new Set(),TH={};
 const esc2=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-async function sb(path,o,tk){o=o||{};const r=await fetch(CLOUD.url+path,{...o,headers:{apikey:CLOUD.key,Authorization:'Bearer '+(tk||CLOUD.key),...(o.headers||{})}});
+async function sb(path,o,tk){o=o||{};const r=await fetch(CLOUD.url+path,{...o,headers:{apikey:CLOUD.key,...((tk||!/^sb_/.test(CLOUD.key))?{Authorization:'Bearer '+(tk||CLOUD.key)}:{}),...(o.headers||{})}});
  if(!r.ok){const t=await r.text().catch(()=>'');throw new Error(r.status+' '+t.slice(0,160))}return r}
 const safeK=k=>k.replace(/[^A-Za-z0-9_-]/g,'_');
 function hook(k){if(!CLOUD)return;if(k==='done'||k==='skip'||k==='notes')schedFlush();if(admOk&&(k==='data'||k==='ed'||k==='plan'||k==='ad'||k==='geo2'))schedPublish()}
