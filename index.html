@@ -41,6 +41,7 @@ body:not(.simple)>#sm{display:none}
 #pn{position:fixed;inset:0;z-index:16;background:var(--bg);overflow:auto;padding:8px 10px 60px}#pn details{border-top:1px solid var(--bd);padding:6px 0}#pn summary{cursor:pointer}#pn summary small{color:var(--mut)}#pn .th{height:96px;width:96px}#pn figure{margin:0;text-align:center;font-size:11px}#pn .ph{padding:6px 0}.pz{padding:6px 0 6px 10px}
 #cl{position:fixed;bottom:calc(6px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:6;background:#000a;color:#fff;border-radius:14px;padding:4px 12px;font-size:12px;pointer-events:none}
 #lg{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:center;justify-content:center}#lg form{background:var(--card);padding:16px;border-radius:12px;display:flex;flex-direction:column;gap:8px;width:min(92vw,340px)}#lg input{padding:10px;font-size:16px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx)}
+#ed input.pos{width:56px;padding:6px 4px;text-align:center;font-weight:700;font-size:16px;box-sizing:border-box;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--tx)}#ed input.pos.chg{border-color:#e67e00;background:#fff3e0;color:#000}#ed .apos{display:flex;gap:8px;align-items:center;justify-content:space-between;font-size:12px;color:var(--mut);margin:2px 0 6px}
 #ed .chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:2px 0 6px}#ed .chips button{padding:4px 10px;font-size:13px}#ed .chips small{color:var(--mut)}
 #ed .ed1{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;margin:8px 0}#ed .ed1 summary{font-weight:700;cursor:pointer}.pcs{margin:0 0 6px 18px;font-size:13px}.pcs summary{cursor:pointer;color:var(--mut)}.ef textarea{width:100%;margin:3px 0;padding:8px;box-sizing:border-box;font:inherit;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--tx)}.row2{display:flex;gap:6px}.row2 label{flex:1;font-size:12px;color:var(--mut)}
 #sm .sr button{padding:10px 14px;font-size:17px}
@@ -390,6 +391,14 @@ function fillEs(){const el=$('esr');if(!el)return;const tk=edQ.split(/\s+/).map(
 const saveED=()=>{SV('ed',ED);SV('plan',P);D=buildD();fillBrands();if(!D.rutas.includes(route))route=D.rutas[0];if(sRoute&&!D.rutas.includes(sRoute))sRoute=null;fitNext=true};
 const frozen=ru=>{const l=ordL(ru).map(s=>s.cr);P[ru]=l;return l};
 function moveStore(cr,to){const f=D.recs.find(r=>r.cr===cr);if(!f||f.ruta===to)return;P[f.ruta]=frozen(f.ruta).filter(c=>c!==cr);P[to]=frozen(to).filter(c=>c!==cr).concat([cr]);(ED.move=ED.move||{})[cr]=to;saveED()}
+function applyPos(ru){const cur=frozen(ru),N=cur.length,want={};
+ document.querySelectorAll('#ed input.pos').forEach(x=>{if(x.dataset.r!==ru||x.value==='')return;const v=Math.round(+x.value);if(Number.isFinite(v)&&v!==+x.dataset.o)want[x.dataset.c]=Math.max(1,Math.min(N,v))});
+ const pin=Object.keys(want).sort((a,b)=>want[a]-want[b]||cur.indexOf(a)-cur.indexOf(b));
+ if(!pin.length){edMsg='No cambiaste ningún número.';return}
+ const out=new Array(N).fill(null);
+ pin.forEach(c=>{let p=want[c]-1;while(p<N&&out[p])p++;if(p>=N){p=want[c]-1;while(p>=0&&out[p])p--}out[p]=c});
+ const rest=cur.filter(c=>!want[c]);let r=0;for(let i=0;i<N;i++)if(!out[i])out[i]=rest[r++];
+ P[ru]=out;SV('plan',P);edMsg='✔ Orden aplicado en '+ru+' ('+pin.length+' tienda(s) movida(s)).'}
 function shift(ru,cr,d){const l=frozen(ru),i=l.indexOf(cr),j=i+d;if(i<0||j<0||j>=l.length)return;[l[i],l[j]]=[l[j],l[i]];P[ru]=l;SV('plan',P)}
 const edRutas=()=>ED.rutas||(ED.rutas=D.rutas.slice());
 function drawEd(){const el=$('ed'),RS=D.rutas,br=[...new Set(['Heineken','Modelo','Kof'].concat(D.recs.map(r=>r.marca)))];
@@ -410,15 +419,15 @@ function drawEd(){const el=$('ed'),RS=D.rutas,br=[...new Set(['Heineken','Modelo
   +(ep?'<div class="addr">Si cambias marca, material o medida, las fotos ya tomadas de esta pieza no se conservan.</div>':'')
   +(ex?'':'<select id="f_ru">'+RS.map(x=>'<option>'+esc(x)+'</option>').join('')+'</select>')+'<button data-e="fsave" class="on">Guardar</button> <button data-e="fcancel">Cancelar</button></div>'}
  RS.forEach((ru,ri)=>{const l=ordL(ru),ot=D.recs.filter(r=>r.ruta!==ru),seen=new Set();
-  h+='<section class="er"><div class="erh"><b>'+esc(ru)+'</b><small>'+l.length+' tiendas</small><span class="eb"><button data-e="ru" data-i="'+ri+'">▲</button><button data-e="rd" data-i="'+ri+'">▼</button><button data-e="rr" data-i="'+ri+'">✏</button><button data-e="pdf" data-i="'+ri+'">🖨 PDF</button>'+(ru==='Otras tiendas'?'':'<button data-e="rx" data-i="'+ri+'">🗑</button>')+'</span></div>';
-  l.forEach((s,k)=>{h+='<div class="sr"><span class="sn">'+(k+1)+'. <b>'+esc(s.tienda)+'</b> <small>'+esc(s.mpo)+' · '+s.cr+' · '+s.sp.length+' pieza(s)</small></span><button data-e="su" data-r="'+esc(ru)+'" data-c="'+s.cr+'">▲</button><button data-e="sd" data-r="'+esc(ru)+'" data-c="'+s.cr+'">▼</button><select data-e="mv" data-c="'+s.cr+'"><option value="">↪ Mover</option>'+RS.filter(x=>x!==ru).map(x=>'<option>'+esc(x)+'</option>').join('')+'</select><button data-e="sp" data-c="'+s.cr+'">＋</button><button data-e="'+(ru==='Otras tiendas'?'sdel':'sx')+'" data-c="'+s.cr+'">'+(ru==='Otras tiendas'?'🗑':'✖')+'</button></div>'+pcs(s)});
+  h+='<section class="er"><div class="erh"><b>'+esc(ru)+'</b><small>'+l.length+' tiendas</small><span class="eb"><button data-e="ru" data-i="'+ri+'">▲</button><button data-e="rd" data-i="'+ri+'">▼</button><button data-e="rr" data-i="'+ri+'">✏</button><button data-e="pdf" data-i="'+ri+'">🖨 PDF</button>'+(ru==='Otras tiendas'?'':'<button data-e="rx" data-i="'+ri+'">🗑</button>')+'</span></div><div class="apos"><span>Escribe el número de lugar de cada tienda y pulsa Aplicar (o Enter)</span><button class="on" data-e="apos" data-r="'+esc(ru)+'">✔ Aplicar orden</button></div>';
+  l.forEach((s,k)=>{h+='<div class="sr"><span class="sn"><input class="pos" type="number" inputmode="numeric" min="1" max="'+l.length+'" value="'+(k+1)+'" data-o="'+(k+1)+'" data-e="pos" data-r="'+esc(ru)+'" data-c="'+s.cr+'"> <b>'+esc(s.tienda)+'</b> <small>'+esc(s.mpo)+' · '+s.cr+' · '+s.sp.length+' pieza(s)</small></span><button data-e="su" data-r="'+esc(ru)+'" data-c="'+s.cr+'">▲</button><button data-e="sd" data-r="'+esc(ru)+'" data-c="'+s.cr+'">▼</button><select data-e="mv" data-c="'+s.cr+'"><option value="">↪ Mover</option>'+RS.filter(x=>x!==ru).map(x=>'<option>'+esc(x)+'</option>').join('')+'</select><button data-e="sp" data-c="'+s.cr+'">＋</button><button data-e="'+(ru==='Otras tiendas'?'sdel':'sx')+'" data-c="'+s.cr+'">'+(ru==='Otras tiendas'?'🗑':'✖')+'</button></div>'+pcs(s)});
   h+='<div class="sr"><select id="ad'+ri+'"><option value="">➕ Agregar tienda a esta ruta…</option>'+ot.filter(r=>!seen.has(r.cr)&&seen.add(r.cr)).sort((a,b)=>a.tienda.localeCompare(b.tienda)).map(r=>'<option value="'+r.cr+'">'+esc(r.tienda)+' ('+esc(r.ruta)+')</option>').join('')+'</select><button data-e="add" data-i="'+ri+'">Agregar</button></div></section>'});
  el.innerHTML=h;fillEs()}
 function openEd(){edMsg='';edForm=null;$('ed').hidden=false;drawEd();$('ed').scrollTop=0}
 $('eb').onclick=openEd;
 $('ed').addEventListener('click',e=>{const t=e.target.closest('[data-e]');if(!t||t.tagName==='SELECT')return;const a=t.dataset.e,ru=t.dataset.r,c=t.dataset.c,i=+t.dataset.i,RS=D.rutas;edMsg='';
  if(a==='close'){$('ed').hidden=true;render();return}
- else if(a==='su')shift(ru,c,-1);else if(a==='sd')shift(ru,c,1);
+ else if(a==='apos')applyPos(ru);else if(a==='su')shift(ru,c,-1);else if(a==='sd')shift(ru,c,1);
  else if(a==='sx'){moveStore(c,'Otras tiendas')}
  else if(a==='sdel'){if(!confirm('¿Eliminar esta tienda por completo? No se puede deshacer.'))return;ED.del=(ED.del||[]).concat([c]);ED.news=(ED.news||[]).filter(s=>s.cr!==c);ED.addsp=(ED.addsp||[]).filter(s=>s.cr!==c);Object.keys(P).forEach(k=>{P[k]=P[k].filter(x=>x!==c)});saveED()}
  else if(a==='add'){const v=$('ad'+i).value;if(v)moveStore(v,RS[i])}
@@ -459,7 +468,8 @@ $('ed').addEventListener('click',e=>{const t=e.target.closest('[data-e]');if(!t|
  else if(a==='pdf'||a==='pdfall'){edMsg='Generando PDF…';drawEd();makePdf(a==='pdf'?[RS[i]]:mainR()).then(m=>{edMsg=m;drawEd()}).catch(er=>{edMsg='No se pudo generar el PDF: '+er.message;drawEd()});return}
  drawEd()});
 $('ed').addEventListener('toggle',e=>{const d=e.target;if(d.tagName==='DETAILS'&&d.dataset.k)edOpen[d.dataset.k]=d.open},true);
-$('ed').addEventListener('input',e=>{if(e.target.id==='es'){edQ=e.target.value;fillEs()}});
+$('ed').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('pos')){e.preventDefault();edMsg='';applyPos(e.target.dataset.r);drawEd();render()}});
+$('ed').addEventListener('input',e=>{if(e.target.classList&&e.target.classList.contains('pos')){e.target.classList.toggle('chg',e.target.value!==e.target.dataset.o);return}if(e.target.id==='es'){edQ=e.target.value;fillEs()}});
 $('ed').addEventListener('change',e=>{const t=e.target;if(t.dataset.e==='ppick'&&t.value!==''){const p=getCat().promos[+t.value];if(p){$('f_pr').value=p.txt;$('f_d1').value=p.desde||'';$('f_d2').value=p.hasta||'';if($('f_ma'))$('f_ma').value=p.marca}return}if(t.dataset.e==='mv'&&t.value){edMsg='';moveStore(t.dataset.c,t.value);drawEd()}});
 /* ---- PDF para imprimir ---- */
 async function makePdf(rutas){const{jsPDF}=window.jspdf,doc=new jsPDF({orientation:'landscape',unit:'pt',format:'letter'}),PW=792,PHt=612,M=28,TOP=32,BOT=PHt-34,LD=10.6,PRr={};
