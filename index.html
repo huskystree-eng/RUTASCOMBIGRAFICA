@@ -264,7 +264,7 @@ const dbSet=(k,v)=>DB.then(db=>new Promise((ok,no)=>{const t=db.transaction('f',
 DB.then(db=>{const c=db.transaction('f').objectStore('f').openCursor(),o={};c.onsuccess=()=>{const x=c.result;if(x){o[x.key]=x.value;x.continue()}else{for(const k in o)PH[k]={...o[k],url:URL.createObjectURL(o[k].blob)};render()}}}).catch(()=>{idbOk=false});
 const phRow=x=>{const k=phk(x);return'<div class="ph">'+[['a','Antes'],['d','Después']].map(([s,n])=>PH[k+'|'+s]?'<img class="th" data-v="'+esc(k+'|'+s)+'" src="'+PH[k+'|'+s].url+'" alt="'+n+'"><small>'+n+'</small>':'<button data-p="'+esc(k+'|'+s)+'">📷 '+n+'</button>').join(' ')+'</div>'};
 const fdt=ts=>new Date(ts).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'});
-async function addPhoto(key,file){const[cr,marca,tipo,medida,slot]=key.split('|'),rec=D.recs.find(r=>phk(r)+'|'+slot===key);if(!rec)return;
+async function addPhoto(key,file){const slot=key.slice(key.lastIndexOf('|')+1),rec=D.recs.find(r=>phk(r)+'|'+slot===key);if(!rec){$('st').textContent='No se encontró la pieza de esta foto. Vuelve a abrir la tienda e inténtalo otra vez.';alert('No se pudo guardar la foto: no se encontró la pieza. Vuelve a abrir la tienda e inténtalo de nuevo.');return}const cr=rec.cr;
  try{$('st').textContent='Procesando foto…';
  const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=URL.createObjectURL(file)}),sc=Math.min(1,1024/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.round(img.naturalWidth*sc),h=Math.round(img.naturalHeight*sc),c=document.createElement('canvas');
  c.width=w;c.height=h;const g=c.getContext('2d');g.drawImage(img,0,0,w,h);URL.revokeObjectURL(img.src);
