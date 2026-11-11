@@ -75,7 +75,7 @@ textarea{width:100%;margin-top:6px;font:inherit;font-size:13px;border:1px solid 
 <select id="bf"><option value="">Todas</option><option>Heineken</option><option>Modelo</option><option>Kof</option></select>
 </div>
 <div class="tools">
-<button id="ms">👤 Modo simple</button><button id="pdfb">🖨 PDF</button><button id="clr">🗑 Borrar progreso</button><button id="eb">✏️ Editar rutas</button><button id="xl">📥 Cargar Excel</button><button id="xe">📤 Bajar Excel</button><button id="pnb">📊 Seguimiento</button><button id="pub">☁️ Publicar</button><button id="gh">⚙️ GitHub</button><button id="rp">📸 Informe con fotos</button><button id="mt">🧰 Material</button><button id="orig">♻ Originales</button><input type="file" id="xf" accept=".xlsx,.xls" hidden><input type="file" id="cam" accept="image/*" capture="environment" hidden>
+<button id="ms">👤 Modo simple</button><button id="pdfb">🖨 PDF</button><button id="clr">🗑 Borrar progreso</button><button id="eb">✏️ Editar rutas</button><button id="xl">📥 Cargar Excel</button><button id="xd">🏬 Directorio de tiendas</button><button id="xe">📤 Bajar Excel</button><button id="pnb">📊 Seguimiento</button><button id="pub">☁️ Publicar</button><button id="gh">⚙️ GitHub</button><button id="rp">📸 Informe con fotos</button><button id="mt">🧰 Material</button><button id="orig">♻ Originales</button><input type="file" id="xf" accept=".xlsx,.xls" hidden><input type="file" id="xdf" accept=".xlsx,.xls" hidden><input type="file" id="cam" accept="image/*" capture="environment" hidden>
 </div>
 <div class="tools">
 <button id="vw">🗺️ Mapa</button><button id="gmr">🧭 Ruta en Google Maps</button><button id="plan">🧭 Trazar ruta</button><button id="gps">📍 Activar GPS</button><button id="near">Más cercanas</button><button id="hd">Ocultar hechas</button><button id="geoall">Ubicar tiendas</button><button id="csv">Exportar avance</button>
@@ -209,7 +209,7 @@ async function loadXlsx(file){try{
  if(!A)return $('st').textContent='No encontré los encabezados (Ruta y Tienda o CR…). Usa la plantilla.';
  const get=(r,f)=>{for(const k in r)if(f(fx(k)))return r[k];return''},S=(r,f)=>String(get(r,f)).trim();
  const cur=JSON.parse(JSON.stringify(D)),nk=s=>fx(s).replace(/^oxxo/,''),byName=new Map(),byCr=new Map();
- cur.recs.forEach(r=>{byCr.set(r.cr,r);byName.set(nk(r.tienda),r.cr)});
+ cur.recs.forEach(r=>{byCr.set(r.cr,r);byName.set(nk(r.tienda),r.cr)});Object.entries(cur.dir||{}).forEach(([c,x])=>{if(!byCr.has(c)){byCr.set(c,{cr:c,tienda:x.t,mpo:x.m});if(!byName.has(nk(x.t)))byName.set(nk(x.t),c)}});
  const hash=s=>{let h=5381;for(const c of s)h=(h*33^c.charCodeAt(0))>>>0;return h.toString(36).toUpperCase().slice(0,5)};
  const skipped=[],warns=[],ng={},ord={},rutas=[],recs=[],addr={},newCr=new Set(),nameCr=new Set();let bad=0;
  A.slice(hi+1).forEach((a,ix)=>{const r={};A[hi].forEach((h,i)=>{if(h!=='')r[h]=a[i]});const n=hi+ix+2;
@@ -245,7 +245,7 @@ async function loadXlsx(file){try{
  const og=geo;if(merge)geo={...og};else{geo={};Object.keys(og).forEach(k=>{if(og[k].src==='manual'&&allAddr[k])geo[k]=og[k]})}Object.assign(geo,ng);
  const np=merge?{...P}:{};rutas.forEach(ru=>{delete np[ru];const l=Object.keys(ord).filter(k=>k.startsWith(ru+'|')).sort((a,b)=>ord[a]-ord[b]).map(k=>k.slice(ru.length+1));if(l.length)np[ru]=l});P=np;
  const cat=getCat(cur);fin.forEach(r=>{if(r.promo&&!cat.promos.some(p=>p.marca===r.marca&&p.txt===r.promo))cat.promos.push({marca:r.marca,txt:r.promo,desde:r.desde||(VG[r.marca]||[])[0]||'',hasta:r.hasta||(VG[r.marca]||[])[1]||''});if(r.tipo&&!cat.mats.some(m=>fx(m)===fx(r.tipo)))cat.mats.push(r.tipo)});
- BASE={rutas:allR,recs:allRecs,addr:allAddr,main:allR.filter(r=>!/^otras/i.test(r)),cat};ED={};SV('ed',ED);D=buildD();if(!merge){skip={};SV('skip',skip);AD={}}done=nd;RL={};
+ BASE={rutas:allR,recs:allRecs,addr:allAddr,main:allR.filter(r=>!/^otras/i.test(r)),cat,dir:cur.dir||{}};ED={};SV('ed',ED);D=buildD();if(!merge){skip={};SV('skip',skip);AD={}}done=nd;RL={};
  if(!(merge&&D.rutas.includes(route)))route=rutas[0];if(sRoute&&!mainR().includes(sRoute)){sRoute=null;SV('sroute',null)}fitNext=true;
  SV('data',BASE);SV('done',done);SV('geo2',geo);SV('plan',P);SV('ad',AD);fillBrands();
  const st=new Set(fin.map(r=>r.cr)),sc=[...st].filter(c=>!geo[c]).length;
@@ -253,6 +253,32 @@ async function loadXlsx(file){try{
  render();
  if(skipped.length||warns.length)alert((skipped.length?'Se ignoraron '+skipped.length+' fila(s):\n'+skipped.slice(0,10).join('\n')+(skipped.length>10?'\n…':''):'')+(warns.length?(skipped.length?'\n\n':'')+'Avisos:\n'+warns.slice(0,10).join('\n'):''))
  }catch(e){$('st').textContent='No se pudo leer el Excel: '+e.message}}
+
+async function loadDir(file){try{
+ const wb=XLSX.read(await file.arrayBuffer(),{type:'array'});
+ const KC=k=>['cr','codigo','codigocr','crtienda','numerocr','nocr'].includes(k),KT=k=>['tienda','nombre','nombretienda','nombredelatienda','sucursal'].includes(k),KE=k=>['estado','region','entidad'].includes(k),KM=k=>k==='municipio'||k==='ciudad'||k==='localidad',KD=k=>k==='direccion'||k==='domicilio';
+ const GEN=/^(hoja|sheet|tiendas|todas|base|datos|listado|general|recorrido)\s*\d*$/;
+ const dir={...(BASE.dir||{})},have=new Set(D.recs.map(r=>r.cr)),skipped=[],seen=new Set();let nw=0,ex=0,upd=0,rows=0,sheets=0;
+ for(const n of wb.SheetNames){const a=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:''});
+  const hi=a.slice(0,25).findIndex(r=>{const f=r.map(fx);return f.some(KC)&&f.some(KT)||f.some(KT)&&f.some(KE)});if(hi<0)continue;sheets++;
+  const H=a[hi].map(fx),ic=H.findIndex(KC),it=H.findIndex(KT),ie=H.findIndex(KE),im=H.findIndex(KM),id=H.findIndex(KD);
+  const sheetEst=GEN.test(fx(n))||fx(n)===''?'':n.trim();
+  a.slice(hi+1).forEach((r,ix)=>{const cr=ic>=0?String(r[ic]).trim().toUpperCase():'',t=String(r[it]||'').trim();if(!cr&&!t)return;rows++;const ln=n+' fila '+(hi+ix+2);
+   if(/^(obligatorio|elegir|opcional)/.test(fx(cr))||fx(t)==='obligatorio')return;
+   if(!cr){skipped.push(ln+': falta el CR'+(t?' ('+t+')':''));return}
+   if(!t){skipped.push(ln+': falta el nombre (CR '+cr+')');return}
+   if(seen.has(cr)){skipped.push(ln+': CR repetido '+cr+' (se usó la primera)');return}seen.add(cr);
+   const e={t,e:(ie>=0?String(r[ie]).trim():'')||sheetEst,m:im>=0?String(r[im]).trim():'',d:id>=0?String(r[id]).trim():''};
+   if(have.has(cr)){ex++;return}
+   if(dir[cr]){upd++}else nw++;dir[cr]=e})}
+ if(!sheets)return $('st').textContent='No encontré encabezados en el Excel. Necesito columnas CR y Tienda (y Estado). Usa Plantilla_Tiendas.xlsx.';
+ if(!rows)return $('st').textContent='El Excel no tiene filas de tiendas.';
+ BASE.dir=dir;SV('data',BASE);D=buildD();fillEs&&fillEs();
+ $('st').textContent='Directorio: '+nw+' tienda(s) nueva(s) agregada(s)'+(upd?', '+upd+' actualizada(s)':'')+', '+ex+' ya estaban en tus rutas (no se tocaron)'+(skipped.length?', '+skipped.length+' fila(s) ignorada(s)':'')+'. Total en directorio: '+Object.keys(dir).filter(c=>!have.has(c)).length+'.';
+ if(skipped.length)alert('Se ignoraron '+skipped.length+' fila(s):\n'+skipped.slice(0,12).join('\n')+(skipped.length>12?'\n…':''));
+ if($('ed')&&$('ed').style.display!=='none'&&typeof drawEd==='function')drawEd();
+ }catch(e){$('st').textContent='No se pudo leer el Excel de tiendas: '+e.message}}
+$('xd').onclick=()=>$('xdf').click();$('xdf').onchange=e=>{if(e.target.files[0])loadDir(e.target.files[0]);e.target.value=''};
 $('xl').onclick=()=>$('xf').click();$('xf').onchange=e=>{if(e.target.files[0])loadXlsx(e.target.files[0]);e.target.value=''};
 $('xe').onclick=()=>{const rows=[];D.rutas.forEach(ru=>D.recs.filter(r=>r.ruta===ru).forEach(r=>{const a=D.addr[r.cr]||{},g=geo[r.cr],o=(P[ru]||[]).indexOf(r.cr);
  rows.push({'Ruta':ru,'CR':r.cr,'Tienda':r.tienda,'Municipio':r.mpo||a.mpo||'','Dirección':AD[r.cr]!==undefined?AD[r.cr]:(a.dir||''),'Coordenadas (pegar de Google Maps)':g&&g.src==='manual'?g.lat.toFixed(6)+', '+g.lng.toFixed(6):'','Orden':o<0?'':o+1,'Marca':r.marca,'Tipo':r.tipo,'Medida (m)':r.medida,'Medida original':r.orig,'Promoción':r.promo,'Vigencia desde':r.desde||(VG[r.marca]||[])[0]||'','Vigencia hasta':r.hasta||(VG[r.marca]||[])[1]||'','Acción':r.acc||'Instalar','Qué hacer en el lugar':r.ins||'','Material (pieza)':r.mat||'','Accesorios y herramientas':r.acs||'','Observaciones de la tienda':a.obs||''})}));
@@ -390,7 +416,8 @@ const pcs=(s,ru)=>'<details class="pcs"><summary>'+s.sp.length+' pieza(s) — ve
 function fillEs(){const el=$('esr');if(!el)return;const tk=edQ.split(/\s+/).map(fx).filter(Boolean);if(!tk.length){el.innerHTML='<div class="addr">Escribe para buscar entre todas las tiendas.</div>';return}
  const m=new Map();D.recs.forEach(r=>{let s=m.get(r.cr);if(!s){s={cr:r.cr,tienda:r.tienda,mpo:r.mpo||(D.addr[r.cr]||{}).mpo||'',rutas:[],n:0};m.set(r.cr,s)}if(!s.rutas.includes(r.ruta))s.rutas.push(r.ruta);s.n++});
  const l=[...m.values()].filter(s=>{const z=fx(s.tienda+' '+s.cr+' '+s.mpo);return tk.every(w=>z.includes(w))}).slice(0,20);
- el.innerHTML=l.length?l.map(s=>'<div class="sr"><span class="sn"><b>'+esc(s.tienda)+'</b> <small>'+esc(s.mpo)+' · '+esc(s.cr)+' · en '+s.rutas.map(esc).join(', ')+' · '+s.n+' pieza(s)</small></span><select>'+D.rutas.map(r=>'<option'+(s.rutas.includes(r)?' disabled':'')+'>'+esc(r)+'</option>').join('')+'</select><button data-e="eadd" data-c="'+esc(s.cr)+'" data-f="'+esc(s.rutas[0])+'"'+(s.rutas.length>1?' disabled title="Está en varias rutas: muévela desde la lista de su ruta"':'')+'>Mover</button><button data-e="ecp" data-c="'+esc(s.cr)+'" data-f="'+esc(s.rutas[0])+'">Copiar</button></div>').join(''):'<div class="addr">Sin resultados. Si es una tienda nueva usa ➕ Tienda nueva.</div>'}
+ const dl=Object.entries(D.dir||{}).filter(([c,x])=>!m.has(c)&&tk.every(w=>fx(x.t+' '+c+' '+x.m+' '+x.e).includes(w))).slice(0,Math.max(0,30-l.length)).map(([c,x])=>'<div class="sr"><span class="sn"><b>'+esc(x.t)+'</b> <small>'+esc([x.e,x.m].filter(Boolean).join(' · '))+' · '+esc(c)+' · directorio (sin ruta)</small></span><select>'+D.rutas.map(r=>'<option>'+esc(r)+'</option>').join('')+'</select><button data-e="edir" data-c="'+esc(c)+'">Agregar a ruta</button></div>').join('');
+ el.innerHTML=(l.length?l.map(s=>'<div class="sr"><span class="sn"><b>'+esc(s.tienda)+'</b> <small>'+esc(s.mpo)+' · '+esc(s.cr)+' · en '+s.rutas.map(esc).join(', ')+' · '+s.n+' pieza(s)</small></span><select>'+D.rutas.map(r=>'<option'+(s.rutas.includes(r)?' disabled':'')+'>'+esc(r)+'</option>').join('')+'</select><button data-e="eadd" data-c="'+esc(s.cr)+'" data-f="'+esc(s.rutas[0])+'"'+(s.rutas.length>1?' disabled title="Está en varias rutas: muévela desde la lista de su ruta"':'')+'>Mover</button><button data-e="ecp" data-c="'+esc(s.cr)+'" data-f="'+esc(s.rutas[0])+'">Copiar</button></div>').join(''):'')+dl||'<div class="addr">Sin resultados. Si es una tienda nueva usa ➕ Tienda nueva.</div>'}
 const saveED=()=>{SV('ed',ED);SV('plan',P);D=buildD();fillBrands();if(!D.rutas.includes(route))route=D.rutas[0];if(sRoute&&!D.rutas.includes(sRoute))sRoute=null;fitNext=true};
 const frozen=ru=>{const l=ordL(ru).map(s=>s.cr);P[ru]=l;return l};
 function moveStore(cr,to,from){const rs=D.recs.filter(r=>r.cr===cr);if(!rs.length)return;from=from||rs[0].ruta;const mv=rs.filter(r=>r.ruta===from);if(!mv.length||from===to)return;
@@ -417,15 +444,15 @@ function drawEd(){const el=$('ed'),RS=D.rutas,br=[...new Set(['Heineken','Modelo
   +(edPr?(()=>{const p=edPr.i>=0?cat.promos[edPr.i]:{marca:'',txt:'',desde:'',hasta:''};return'<div class="ef"><b>'+(edPr.i>=0?'Editar promoción':'Promoción nueva')+'</b>'+brIn('pr_ma',p.marca)+'<textarea id="pr_tx" rows="3" placeholder="Texto de la promoción">'+esc(p.txt)+'</textarea><div class="row2"><label>Desde <input id="pr_d" type="date" value="'+esc(p.desde)+'"></label><label>Hasta <input id="pr_h" type="date" value="'+esc(p.hasta)+'"></label></div><button data-e="prsave" class="on">Guardar</button> <button data-e="pcancel">Cancelar</button></div>'})():'')
   +cat.promos.map((p,k)=>'<div class="sr"><span class="sn"><span class="tag '+esc(p.marca)+'">'+esc(p.marca)+'</span> '+esc(p.txt.slice(0,90))+(p.txt.length>90?'…':'')+'<br><small>'+esc(p.desde||'—')+' a '+esc(p.hasta||'—')+'</small></span><button data-e="pe" data-i="'+k+'">✏</button><button data-e="px" data-i="'+k+'">🗑</button></div>').join('')+'<div class="sr"><button data-e="pn">➕ Promoción nueva</button></div></details>';
  h+='<details class="ed1" data-k="mt"'+(edOpen.mt?' open':'')+'><summary>🧱 Materiales ('+cat.mats.length+')</summary>'+cat.mats.map((m,k)=>'<div class="sr"><span class="sn">'+esc(m)+'</span><button data-e="mx" data-i="'+k+'">🗑</button></div>').join('')+'<div class="sr"><button data-e="mn">➕ Material nuevo</button></div></details>';
- if(edForm){const ex=!!edForm.cr,ep=edForm.pid!=null?D.recs.find(r=>String(r.id)===String(edForm.pid)):null,mats=cat.mats.slice();if(ep&&ep.tipo&&!mats.includes(ep.tipo))mats.push(ep.tipo);const V=k=>ep&&ep[k]!=null?ep[k]:'';
-  h+='<div class="ef"><b>'+(ep?'Editar pieza de '+esc(edForm.cr):ex?'Agregar una pieza a '+esc(edForm.cr):'Tienda nueva')+'</b>'+(ex?'':'<input id="f_cr" placeholder="CR (opcional)"><input id="f_t" placeholder="Nombre de la tienda"><input id="f_m" placeholder="Municipio"><input id="f_d" placeholder="Dirección">')
+ if(edForm){const PRE=edForm.pre||{},ex=!!edForm.cr,ep=edForm.pid!=null?D.recs.find(r=>String(r.id)===String(edForm.pid)):null,mats=cat.mats.slice();if(ep&&ep.tipo&&!mats.includes(ep.tipo))mats.push(ep.tipo);const V=k=>ep&&ep[k]!=null?ep[k]:'';
+  h+='<div class="ef"><b>'+(ep?'Editar pieza de '+esc(edForm.cr):ex?'Agregar una pieza a '+esc(edForm.cr):'Tienda nueva')+'</b>'+(ex?'':'<input id="f_cr" placeholder="CR (opcional)" value="'+esc(PRE.cr||'')+'"><input id="f_t" placeholder="Nombre de la tienda" value="'+esc(PRE.t||'')+'"><input id="f_m" placeholder="Municipio" value="'+esc(PRE.m||'')+'"><input id="f_d" placeholder="Dirección" value="'+esc(PRE.d||'')+'">')
   +'<select data-e="ppick"><option value="">— Elegir promoción de la lista —</option>'+cat.promos.map((p,k)=>'<option value="'+k+'">['+esc(p.marca)+'] '+esc(p.txt.slice(0,60))+'</option>').join('')+'</select>'
   +'<textarea id="f_pr" rows="3" placeholder="Texto de la promoción (si la escribes aquí, se guarda también en la lista)">'+esc(V('promo'))+'</textarea>'
   +'<div class="row2"><label>Vigencia desde <input id="f_d1" type="date" value="'+esc(V('desde'))+'"></label><label>hasta <input id="f_d2" type="date" value="'+esc(V('hasta'))+'"></label></div>'
   +brIn('f_ma',V('marca'))+'<select id="f_ti">'+mats.map(x=>'<option'+(x===V('tipo')?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select><input id="f_me" placeholder="Medida, ej. 1.35 x 4.85" value="'+esc(V('medida'))+'">'
   +'<textarea id="f_in" rows="2" placeholder="Pasos en el lugar (vacío = pasos sugeridos del material)">'+esc(V('ins'))+'</textarea><input id="f_ac" placeholder="Accesorios, separados con ; (opcional)" value="'+esc(V('acs'))+'">'
   +(ep?'<div class="addr">Si cambias marca, material o medida, las fotos ya tomadas de esta pieza no se conservan.</div>':'')
-  +(ex?'':'<select id="f_ru">'+RS.map(x=>'<option>'+esc(x)+'</option>').join('')+'</select>')+'<button data-e="fsave" class="on">Guardar</button> <button data-e="fcancel">Cancelar</button></div>'}
+  +(ex?'':'<select id="f_ru">'+RS.map(x=>'<option'+(x===PRE.ru?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select>')+'<button data-e="fsave" class="on">Guardar</button> <button data-e="fcancel">Cancelar</button></div>'}
  RS.forEach((ru,ri)=>{const l=ordL(ru),ot=D.recs.filter(r=>r.ruta!==ru),seen=new Set();
   h+='<section class="er"><div class="erh"><b>'+esc(ru)+'</b><small>'+l.length+' tiendas</small><span class="eb"><button data-e="ru" data-i="'+ri+'">▲</button><button data-e="rd" data-i="'+ri+'">▼</button><button data-e="rr" data-i="'+ri+'">✏</button><button data-e="pdf" data-i="'+ri+'">🖨 PDF</button>'+(ru==='Otras tiendas'?'':'<button data-e="rx" data-i="'+ri+'">🗑</button>')+'</span></div><div class="apos"><span>Escribe el número de lugar de cada tienda y pulsa Aplicar (o Enter)</span><button class="on" data-e="apos" data-r="'+esc(ru)+'">✔ Aplicar orden</button></div>';
   l.forEach((s,k)=>{h+='<div class="sr"><span class="sn"><input class="pos" type="number" inputmode="numeric" min="1" max="'+l.length+'" value="'+(k+1)+'" data-o="'+(k+1)+'" data-r="'+esc(ru)+'" data-c="'+s.cr+'"> <b>'+esc(s.tienda)+'</b> <small>'+esc(s.mpo)+' · '+s.cr+' · '+s.sp.length+' pieza(s)'+(oth(s.cr,ru)?' · <b>también en '+esc(oth(s.cr,ru))+'</b>':'')+'</small></span><button data-e="su" data-r="'+esc(ru)+'" data-c="'+s.cr+'">▲</button><button data-e="sd" data-r="'+esc(ru)+'" data-c="'+s.cr+'">▼</button><select data-e="mv" data-c="'+s.cr+'" data-r="'+esc(ru)+'"><option value="">↪ Mover</option>'+RS.filter(x=>x!==ru).map(x=>'<option>'+esc(x)+'</option>').join('')+'</select><button data-e="sp" data-c="'+s.cr+'">＋</button><button data-e="'+(ru==='Otras tiendas'?'sdel':'sx')+'" data-c="'+s.cr+'" data-r="'+esc(ru)+'">'+(ru==='Otras tiendas'?'🗑':'✖')+'</button></div>'+pcs(s,ru)});
@@ -460,7 +487,8 @@ $('ed').addEventListener('click',e=>{const t=e.target.closest('[data-e]');if(!t|
     const ru=g('f_ru')||RS[0];(ED.news=ED.news||[]).push({cr,tienda:nm,mpo:g('f_m'),dir:g('f_d'),ruta:ru,sp:[sp]});P[ru]=frozen(ru).concat([cr])}}
   edForm=null;saveED()}
  else if(a==='bpick'){const x=$(t.dataset.t);if(x)x.value=t.dataset.b;return}
- else if(a==='eadd'||a==='ecp'){const sel=t.parentElement.querySelector('select');if(sel&&sel.value){if(a==='eadd'){moveStore(c,sel.value,t.dataset.f);edMsg='✔ Tienda movida a '+sel.value}else copyStore(c,t.dataset.f,sel.value)}}
+ else if(a==='edir'){const sel=t.parentElement.querySelector('select'),x=(D.dir||{})[c];if(x&&sel){edForm={pre:{cr:c,t:x.t,m:x.m,d:x.d,ru:sel.value}}}}
+  else if(a==='eadd'||a==='ecp'){const sel=t.parentElement.querySelector('select');if(sel&&sel.value){if(a==='eadd'){moveStore(c,sel.value,t.dataset.f);edMsg='✔ Tienda movida a '+sel.value}else copyStore(c,t.dataset.f,sel.value)}}
  else if(a==='pe2'){edForm={cr:c,pid:t.dataset.id};drawEd();$('ed').scrollTop=0;return}
  else if(a==='pdel'){if(!confirm('¿Quitar esta pieza de la tienda?'))return;ED.pdel=(ED.pdel||[]).concat([+t.dataset.id]);saveED()}
  else if(a==='pn'){edPr={i:-1};drawEd();return}
@@ -596,7 +624,7 @@ async function delEmp(id,n){if(!confirm('¿Eliminar a '+n+'?\n\nPerderá el acce
  try{await sb('/rest/v1/empleados?id=eq.'+encodeURIComponent(id),{method:'DELETE'},await token());loadPn()}catch(e){$('pnm').textContent='⚠ No se pudo eliminar: '+e.message}}
 /* --- configuración publicada por el administrador --- */
 async function pullCfg(force){if(!CLOUD||(admOk&&!force)||!navigator.onLine)return;
- try{const r=await(await sb('/rest/v1/config?id=eq.1&select=data,version')).json(),c=r[0];if(!c||String(c.version)===String(LS('cfgv')||''))return;applyCfg(c.data);SV('cfgv',c.version);
+ try{const v0=(await(await sb('/rest/v1/config?id=eq.1&select=version')).json())[0];if(!v0||String(v0.version)===String(LS('cfgv')||''))return;const r=await(await sb('/rest/v1/config?id=eq.1&select=data,version')).json(),c=r[0];if(!c)return;applyCfg(c.data);SV('cfgv',c.version);
   if(!admOk&&(c.data.reset||0)>(LS('reset')||0)){await wipeProgress();SV('reset',c.data.reset)}
   if(!admOk){const rr=c.data.resetR||{},seen=LS('resetRL')||{};for(const ru in rr)if(rr[ru]>(seen[ru]||0)){await wipeRoute(ru);seen[ru]=rr[ru]}SV('resetRL',seen)}
   render()}catch(e){}}
